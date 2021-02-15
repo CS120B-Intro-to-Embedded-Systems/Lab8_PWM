@@ -49,81 +49,33 @@ void PWM_off(){
     TCCR3B = 0x00;
 }
 
-unsigned char tmpA, button0, button1, button2;
-double notes[8] = {261.63, 293.66, 329.63, 349.232, 392.00, 440.00, 493.88, 523.25};
-enum States {INIT, ON, OFF, INC, DEC} State;
-unsigned char i = 0;
-
-void tick(){
-  switch(State){
-    case INIT:
-      State = OFF; //off untill on button pressed
-      break;
-    case OFF:
-      if(button0){
-        i = 0; //reset
-        set_PWM(array[i]);
-        State = ON;
-      }else{
-        State = OFF;
-      }
-      break;
-    case ON:
-      if(button0){
-        State = OFF;
-      }else if(button1){
-        State = UP;
-      }else if(button2){
-        State = DEC;
-      }
-      break;
-    case INC:
-      State = ON;
-      break;
-    case DEC:
-      State = ON;
-      break;
-    default:
-      break;
-  }
-
-  switch(State){
-    case INIT:
-      break;
-    case OFF:
-      set_PWM(0);
-      break;
-    case INC:
-      if(i <= 7){
-        i++;
-      }
-      set_PWM(notes[i]);
-      break;
-    case DEC:
-      if(i >= 0){
-        i--;
-      }
-      set_PWM(notes[i]);
-      break;
-    default:
-      break;
-  }
-}
-
+unsigned char tmpA;
+unsigned char button0, button1, button2;
 int main(void) {
     /* Insert DDR and PORT initializations */
     DDRA = 0x00; PORTA = 0xFF;
     DDRB = 0xFF; PORTB = 0x00;
+    unsigned double cNote = 261.63, dNote = 293.66, eNote = 329.63;
     PWM_on();
-    TimerSet(100);
+    TimerSet(50);
     TimerOn();
-    State = INIT;
     /* Insert your solution below */
     while (1) {
+      tmpA = ~PINA;
       button0 = ~PINA & 0x01;
       button1 = ~PINA & 0x02;
       button2 = ~PINA & 0x04;
-      tick();
+
+      if(tmpA = 0x00){ //no button
+        set_PWM(0); //turn off
+      }else if(button0){
+        set_PWM(cNote);
+      }else if(button1){
+        set_PWM(dNote);
+      }else if(button2){
+        set_PWM(eNote);
+      }
+
       while(!TimerFlag){}
       TimerFlag = 0;
     }
