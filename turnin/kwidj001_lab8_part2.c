@@ -49,31 +49,12 @@ void PWM_off(){
     TCCR3B = 0x00;
 }
 
-unsigned char tmpA, button;
-//ccc cbabcdeee edcdefgc agfedc bagfgabc
-//C = 261.63
-//D = 293.66
-//E = 329.63
-//F = 349.23
-//G = 392.00
-//A = 440.00
-//B = 493.88
-double C = 261.63;
-double D = 293.66;
-double E = 329.63;
-double F = 349.23;
-double G = 392.00;
-double A = 440.00;
-double B = 493.88;
-double melody[34] = {C,C,C, C,B,A,B,C,D,E,E,E, E,D,C,D,E,F,G,C, A,G,F,E,D,C, B,A,G,F,G,A,B,C};
-//double notes[8] = {261.63, 293.66, 329.63, 349.232, 392.00, 440.00, 493.88, 523.25};
-
-enum States {INIT, ON, OFF, HOLD} State;
-//unsigned char i = 0; //timer pulse
-unsigned char note = 0; //index
+unsigned char tmpA, button0, button1, button2;
+double notes[8] = {261.63, 293.66, 329.63, 349.232, 392.00, 440.00, 493.88, 523.25};
+enum States {INIT, ON, OFF, INC, DEC} State;
+unsigned char i = 0;
 
 void tick(){
-//transitions
   switch(State){
     case INIT:
       State = OFF; //off untill on button pressed
@@ -82,38 +63,47 @@ void tick(){
       if(button0){
         i = 0; //reset
         set_PWM(array[i]);
-        note = 0;
         State = ON;
       }else{
         State = OFF;
       }
       break;
     case ON:
-      if(count == melody.size()){
-        State = HOLD;
-      }
-      break;
-    case HOLD:
       if(button0){
         State = OFF;
+      }else if(button1){
+        State = UP;
+      }else if(button2){
+        State = DEC;
       }
+      break;
+    case INC:
+      State = ON;
+      break;
+    case DEC:
+      State = ON;
       break;
     default:
       break;
   }
-//actions
+
   switch(State){
     case INIT:
       break;
     case OFF:
       set_PWM(0);
       break;
-    case ON:
-      set_PWM(melody[note]);
-      count++;
+    case INC:
+      if(i <= 7){
+        i++;
+      }
+      set_PWM(notes[i]);
       break;
-    case HOLD:
-      set_PWM(0);
+    case DEC:
+      if(i >= 0){
+        i--;
+      }
+      set_PWM(notes[i]);
       break;
     default:
       break;
@@ -131,8 +121,8 @@ int main(void) {
     /* Insert your solution below */
     while (1) {
       button0 = ~PINA & 0x01;
-      // button1 = ~PINA & 0x02;
-      // button2 = ~PINA & 0x04;
+      button1 = ~PINA & 0x02;
+      button2 = ~PINA & 0x04;
       tick();
       while(!TimerFlag){}
       TimerFlag = 0;
